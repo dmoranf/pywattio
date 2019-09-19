@@ -19,13 +19,30 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class WattioOauth2Client:
+    """Wattio OAUTH2 Class."""
+
     def __init__(self, client_id, client_secret, redirect_uri="http://localhost:8080"):
-        # Constructor
+        """Constructor method
+
+        :param client_id: [description]
+        :type client_id: str
+        :param client_secret: [description]
+        :type client_secret: str
+        :param redirect_uri: [description], defaults to "http://localhost:8080"
+        :type redirect_uri: str, optional
+        """
+
         self.client_id = client_id
         self.client_secret = client_secret
         self.redirect_uri = redirect_uri
 
     def get_auth_uri(self):
+        """Returns Wattio Auth URI
+
+        :return: Wattio URL where you need to allow access to retrieve an auth code
+        :rtype: str
+        """
+
         auth_uri = (
             WATTIO_AUTH_URI
             + "?response_type=code&client_id="
@@ -36,7 +53,14 @@ class WattioOauth2Client:
         return auth_uri
 
     def get_token(self, code):
-        """Get Token from Wattio API, requieres Auth Code, Client ID and Secret."""
+        """Returns a Token from Wattio API, requires Auth Code, Cliend ID and Secret,
+
+        :param code: Auth code retrieves from Wattio API
+        :type code: str
+        :return: Token for API access
+        :rtype: str
+        """
+
         data = {
             "code": code,
             "client_id": self.client_id,
@@ -65,14 +89,32 @@ class WattioOauth2Client:
 
 
 class Wattio:
-    """Wattio API Class to retrieve data."""
+    """Wrapper for Wattio's API."""
 
     def __init__(self, token):
+        """Constructor method
+
+        :param token: Wattio access token
+        :type token: str
+        """
+
         self.token = token
         self.api_call_headers = {"Authorization": "Bearer " + self.token}
 
-    def make_request(self, uri, type=None, ieee=None, value=None):
-        if type is not None:
+    def make_request(self, uri, ieee=None, value=None):
+        """Builds a request to Wattio API based on passed params
+
+        :param uri: Wattio endpoint URI
+        :type uri: str
+        :param ieee: Device identifier (IEEE) defaults to None
+        :type ieee: str, optional
+        :param value: Value to send, defaults to None
+        :type value: str, optional
+        :return: Response data from API request
+        :rtype: str
+        """
+
+        if ieee is not None:
             uri = uri.format(str(ieee), str(value))
         try:
             api_call_response = requests.get(
@@ -87,22 +129,58 @@ class Wattio:
             return None
 
     def get_devices(self):
-        """Get device info from Wattio API."""
+        """Gets devices info from Wattio API
+
+        :return: json device data
+        :rtype: str
+        """
+
         return self.make_request(WATTIO_DEVICES_URI)
 
     def update_wattio_data(self):
-        """Get Data from WattioAPI."""
+        """Gets status data from Wattio API
+
+        :return: json status data
+        :rtype: str
+        """
+
         return self.make_request(WATTIO_STATUS_URI)
 
     def set_switch_status(self, ieee, status):
-        """Change switch status on / off."""
+        """Changes switch status on//ff
+
+        :param ieee: Device id (IEEE)
+        :type ieee: str
+        :param status: on | off
+        :type status: str
+        :return:
+        :rtype:
+        """
+
         return self.make_request(WATTIO_POD_URI, ieee, status)
 
     def set_thermic_temp(self, ieee, temp):
-        """Change thermic target temp."""
+        """Changes thermic target temperature
+
+        :param ieee: Device id (IEEE)
+        :type ieee: str
+        :param temp: Target temperature
+        :type temp: float
+        :return:
+        :rtype:
+        """
+
         return self.make_request(WATTIO_THERMIC_TEMP_URI, ieee, temp)
 
     def set_thermic_mode(self, ieee, status):
-        """Change thermic working mode."""
-        return self.make_request(WATTIO_THERMIC_TEMP_URI, ieee, status)
+        """Changes thermic mode
 
+        :param ieee: Device id (IEEE)
+        :type ieee: str
+        :param status: Thermic mode ( 0 => Off | 1 => Manual | 2 => Auto)
+        :type status: int
+        :return:
+        :rtype:
+        """
+
+        return self.make_request(WATTIO_THERMIC_TEMP_URI, ieee, status)
