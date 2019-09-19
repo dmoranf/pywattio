@@ -114,18 +114,26 @@ class Wattio:
         :rtype: str
         """
 
+        method = "GET"
         if ieee is not None:
             uri = uri.format(str(ieee), str(value))
+            method = "PUT"
         try:
-            api_call_response = requests.get(
-                uri, headers=self.api_call_headers, verify=False
+            api_call_response = requests.request(
+                method, uri, headers=self.api_call_headers, verify=False
             )
+            _LOGGER.debug("Request response code %s", api_call_response.status_code)
+            if ieee is not None:
+                return api_call_response.status_code
             if api_call_response.status_code == 200:
+                _LOGGER.debug("Request data response %s", api_call_response.text)
                 data = json.loads(api_call_response.text)
                 return data
             else:
+                _LOGGER.error("Something went wrong - Response code %s", api_call_response.status_code)
                 return None
         except requests.exceptions.RequestException as err:
+            _LOGGER.error("Request error:  %s", err)
             return None
 
     def get_devices(self):
@@ -137,7 +145,7 @@ class Wattio:
 
         return self.make_request(WATTIO_DEVICES_URI)
 
-    def update_wattio_data(self):
+    def get_status(self):
         """Gets status data from Wattio API
 
         :return: json status data
